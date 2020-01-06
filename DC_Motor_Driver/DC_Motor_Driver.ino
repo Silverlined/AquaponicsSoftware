@@ -5,26 +5,49 @@
 #define input2 8
 
 
-void setup() {
+float getActiveTime(float distance) {
+  return (distance + 0.1) / 3.275;
+}
+
+void setup(void) {
   Serial.begin(9600);
   pinMode(input1, OUTPUT);
   pinMode(input2, OUTPUT);
 }
 
-void loop() {
-  lengthenArm();
-  delay(5000);
-  shortenArm();
-  delay(5000);
+void loop(void) {
+  controlSerial();
 }
 
-void lengthenArm() {
+void controlSerial(void) {
+  if (Serial.available()) {
+    Serial.println("Received");
+    char cmd = Serial.read();
+    switch (cmd){
+      case 's': stopArm(); break;
+      case 'a': 
+      lengthenArm();
+      delay((int) (getActiveTime(5.5) * 1000));
+      stopArm(); break;
+      case 'z': 
+      lengthenArm();
+      delay((int) (getActiveTime(5.5) * 1000));
+      stopArm(); break;
+    }
+  }
+}
+
+void shortenArm(void) {
   digitalWrite(input1, LOW);
   digitalWrite(input2, HIGH);
 }
 
-void shortenArm() {
+void lengthenArm(void) {
   digitalWrite(input1, HIGH);
   digitalWrite(input2, LOW);
 }
 
+void stopArm(void) {
+  digitalWrite(input1, LOW);
+  digitalWrite(input2, LOW);
+}

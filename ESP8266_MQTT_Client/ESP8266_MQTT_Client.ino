@@ -1,5 +1,6 @@
 #include<PubSubClient.h>
-#include <ESP8266WiFi.h>
+#include<ESP8266WiFi.h>
+#include<SoftwareSerial.h>
 
 // Wi-Fi configuration
 const char* ssid = "ZiggoC6C6A6C";
@@ -19,21 +20,30 @@ const char separator = ' ';
 String sensor;
 float value;
 
+SoftwareSerial arduinoSerial(D5, D6);
+
 void parseSerial(void) {
-  uint8_t byteCount = Serial.readBytesUntil(EOL, buffer, sizeof(buffer));   //read until EOL, put all to buffer.
-  String _read = String(buffer);    //Use Strings to make character processing easier.
-  memset(buffer, 0, sizeof(buffer));    //clear, empty buffer
+  if (arduinoSerial.available() > 0) {
+    uint8_t byteCount = arduinoSerial.readBytesUntil(EOL, buffer, sizeof(buffer));   //read until EOL, put all to buffer.
+    String _read = String(buffer);    //Use Strings to make character processing easier.
+    memset(buffer, 0, sizeof(buffer));    //clear, empty buffer
 
-  // Select sensor from associated data
-  int index = _read.indexOf(separator);
-  sensor = _read.substring(0, index);
-  sensor.trim();
-  sensor.toUpperCase();
+    // Select sensor from associated data
+    int index = _read.indexOf(separator);
+    sensor = _read.substring(0, index);
+    sensor.trim();
+    sensor.toLowerCase();
+    Serial.println(sensor);
 
-  // Extract sensor data.
-  String data = _read.substring(index+1);
-  data.trim();
-  value = data.toFloat();
+    // Extract sensor data.
+    String data = _read.substring(index + 1);
+    data.trim();
+    value = data.toFloat();
+    Serial.println(value);
+
+    String message = contructMessage(sensor, value);
+    mqttEmit(topic, message);
+  }
 }
 
 void connectWifi(void) {
@@ -69,16 +79,27 @@ void mqttEmit(String topic, String value) {
 
 void setup() {
   Serial.begin(115200);
+  arduinoSerial.begin(4800);
   connectWifi();
   mqtt_client.setServer(server_address, 1883);
 }
 
 void loop() {
+  parseSerial();
   if (!mqtt_client.connected()) {
     mqttReconnect();
   }
-  float sensor = (float)((analogRead(A0) * 100) / 4095);
-  String message = "temp,site=room1 value=28";
-  mqttEmit(topic, message);
+  //String message = "temp,site=room1 value=28";
   delay(3000);
 }
+
+String contructMessage(String sensor, float value) {
+  String message = "";
+  message += sensor;
+  message += F(",site=group4");
+  message += F(" ");
+  message += F("value=");
+  message += String(value, 2);
+  return message;
+}
+
