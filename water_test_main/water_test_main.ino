@@ -19,6 +19,12 @@
 //Colorimeter
 #define LED 10
 
+char buffer[32];
+const char EOL = '\n';    //command terminator (end of line)
+const char separator = ' ';
+char cmd;
+float value;
+
 /* Initialise with specific int time and gain values */
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 
@@ -49,6 +55,20 @@ int getNitrate(void) {  // Calculates the concentration of Nitrate (mg/L) based 
   return (int) (368 - 35 * log(b));
 }
 
+void parseSerial(void) {
+  uint8_t byteCount = Serial.readBytesUntil(EOL, buffer, sizeof(buffer));   //read until EOL, put all to buffer.
+  String _read = String(buffer);    //Use Strings to make character processing easier.
+  memset(buffer, 0, sizeof(buffer));    //clear, empty buffer
+
+  // Select sensor from associated data
+  int index = _read.indexOf(separator);
+  cmd = _read.charAt(0);
+
+  String data = _read.substring(index + 1);
+  data.trim();
+  value = data.toFloat();
+}
+
 void setup(void) {
   pinMode(dcm_input1, OUTPUT);
   pinMode(dcm_input2, OUTPUT);
@@ -64,7 +84,7 @@ void setup(void) {
 }
 
 void loop(void) {
-  controlSerial();
+  getSerial();
 }
 
 float getActiveTime(float distance) {
@@ -88,16 +108,13 @@ void stopArm(void) {
 
 void rotate(int steps, float speed, byte motorPin, byte stepsPin) {
   int direction;
-
   if (steps > 0) {
     direction = HIGH;
   } else {
     direction = LOW;
   }
-
   speed = 1 / speed * 70; //Calculating speed
   steps = abs(steps);
-
   digitalWrite(motorPin, direction);
   /*Steppin'*/
   for (int i = 0; i < steps; i++) {
@@ -135,10 +152,10 @@ void startNitrateAssay(void) {
 }
 
 
-void controlSerial(void) {
+void getSerial(void) {
   if (Serial.available()) {
     Serial.println("Received");
-    char cmd = Serial.read();
+    parseSerial();
     switch (cmd) {
       // Water Testing
       case 'w': startNitrateAssay(); break;
@@ -146,11 +163,11 @@ void controlSerial(void) {
       case 's': stopArm(); break;
       case 'a':
         lengthenArm();
-        delay((int) (getActiveTime(25) * 1000));
+        delay((int) (getActiveTime(value) * 1000));
         stopArm(); break;
       case 'z':
         shortenArm();
-        delay((int) (getActiveTime(25) * 1000));
+        delay((int) (getActiveTime(value) * 1000));
         stopArm(); break;
     }
   }
