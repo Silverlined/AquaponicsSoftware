@@ -2,6 +2,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BMP280.h>
 #include "SparkFun_SCD30_Arduino_Library.h"
+#include "HX711.h"
+#include <Wire.h>
 
 #define TEMP_SENSOR_MEASURE_DELAY 60000 // 1 minute
 #define TEMP_SENSOR_SEND_DELAY 1800000 // 30 minutes
@@ -11,6 +13,17 @@
 #define tempHumiditySensor 7
 #define LDR A3
 #define LDR_THRESHOLD 200
+
+#define BackLeft 3
+#define BackRight 4
+#define FrontLeft 5
+#define FrontRight 6
+#define CLK 9 //clock pin
+
+HX711 scale;
+HX711 scale1;
+HX711 scale2;
+HX711 scale3;
 
 Adafruit_BMP280 bmp_in;
 Adafruit_BMP280 bmp_out;
@@ -29,6 +42,38 @@ long waterTempMeasureTimer;
 long waterTempSendTimer;
 
 long currentTime;
+
+void initLoadCells(void) {
+  scale.begin(FrontLeft, CLK);
+  scale.set_scale();
+  //  scale.tare(); //Reset the scale to 0
+  scale1.begin(FrontRight, CLK);
+  scale1.set_scale();
+  //  scale1.tare(); //Reset the scale to 0
+  scale2.begin(BackLeft, CLK);
+  scale2.set_scale();
+  //  scale2.tare(); //Reset the scale to 0
+  scale3.begin(BackRight, CLK);
+  scale3.set_scale();
+  //  scale3.tare(); //Reset the scale to 0
+}
+
+float getWeight() {
+  float zero_factor = scale.read_average(); //reading the raw value from the load cell, FL
+  float zero_factor1 = scale1.read_average(); //FR
+  float zero_factor2 = scale2.read_average(); //BL
+  float zero_factor3 = scale3.read_average(); //BR
+
+  //for mean calibration (unsure)= (zero_factor + 2929.6)/-24279
+  float Weight1 = (zero_factor - 1923.5) / -23058; //converting to kg & calibrating it, FL
+  float Weight2 = (zero_factor1 - 16736) / -23007; //FR
+  float Weight3 = (zero_factor2 + 17795) / -25892; //BL
+  float Weight4 = (zero_factor3 + 12583) / -25160; //BR
+
+  float Total = abs(Weight1) + abs(Weight2) + abs(Weight3) + abs(Weight4); //combining 4 load cell value and make the total weight value
+  return Total;
+}
+
 
 float getAverageWaterTemp() {
   float result = 0;
@@ -79,8 +124,8 @@ void initBMP280(void) {
 }
 
 bool getLights() {
-  int value = analogRead(LDRpin); // read the value from the LDR]
-  (value > LDR_THRESHOLD) ? return true : return false;
+  int value = analogRead(LDR); // read the value from the LDR]
+  return (value > LDR_THRESHOLD) ? 1 : 0;
 }
 
 void measureAirTemp(void) {
@@ -92,9 +137,32 @@ void setup() {
   Serial.begin(115200);
   esp8266Serial.begin(4800);
   initBMP280();
+  initLoadCells();
+  pinMode(LDR, INPUT);
   waterTempMeasureTimer = 0;
   waterTempSendTimer = TEMP_SENSOR_MEASURE_DELAY * MA_SIZE; // Wait until the temp moving average is filled before sending data.
-  pinMode(LDR, INPUT);
+  //Unit test
+  //  Serial.println(getWeight());
+  //  Serial.println("SETUP DONE");
+  //  measureAirTemp();
+  //  Serial.println(lastAirTempInside);
+  //  Serial.println(lastAirTempOutside);
+  //  Serial.println(co2_sensor.getHumidity());
+  //  Serial.println(co2_sensor.getCO2());
+  //  Serial.println(analogRead(LDR));
+  //  measureAirTemp();
+  //  sendSensorMeasurement("INTEMP", lastAirTempInside);
+  //  delay(1000);
+  //  sendSensorMeasurement("OUTTEMP", lastAirTempOutside);
+  //  delay(1000);
+  //  sendSensorMeasurement("RH", (float) co2_sensor.getHumidity());
+  //  delay(1000);
+  //  sendSensorMeasurement("CO2", (float) co2_sensor.getCO2());
+  //  delay(1000);
+  //  sendSensorMeasurement("LIGHT", (float) getLights());
+  //  delay(1000);
+  //  sendSensorMeasurement("WEIGHT", (float) getWeight());
+  //  delay(1000);
 }
 
 void loop() {
@@ -107,11 +175,20 @@ void loop() {
   if (currentTime > waterTempSendTimer) {
     measureAirTemp();
     sendSensorMeasurement("WTEMP", getAverageWaterTemp());
+    delay(1000);
     sendSensorMeasurement("INTEMP", lastAirTempInside);
+    delay(1000);
     sendSensorMeasurement("OUTTEMP", lastAirTempOutside);
+    delay(1000);
     sendSensorMeasurement("RH", (float) co2_sensor.getHumidity());
+    delay(1000);
     sendSensorMeasurement("CO2", (float) co2_sensor.getCO2());
+    delay(1000);
     sendSensorMeasurement("LIGHT", (float) getLights());
+    delay(1000);
+    sendSensorMeasurement("WEIGHT", (float) getWeight());
+    delay(1000);
     waterTempSendTimer = currentTime + TEMP_SENSOR_SEND_DELAY;
+    delay(1000);
   }
 }

@@ -79,8 +79,8 @@ void setup(void) {
   pinMode(sm3_DirectionPin, OUTPUT);
   pinMode(sm3_StepsPin, OUTPUT);
   pinMode(LED, OUTPUT);
-  initColourSensor();
-  Serial.begin(9600);
+ // initColourSensor();
+  Serial.begin(115200);
 }
 
 void loop(void) {
@@ -91,12 +91,12 @@ float getActiveTime(float distance) {
   return (distance + 0.1) / 3.275;
 }
 
-void shortenArm(void) {
+void lengthenArm(void) {
   digitalWrite(dcm_input1, LOW);
   digitalWrite(dcm_input2, HIGH);
 }
 
-void lengthenArm(void) {
+void shortenArm(void) {
   digitalWrite(dcm_input1, HIGH);
   digitalWrite(dcm_input2, LOW);
 }
@@ -130,22 +130,20 @@ void startNitrateAssay(void) {
   delay((int) (getActiveTime(4) * 1000));
   stopArm();
   //First Titrator
-  rotate(8000, 0.5, sm1_DirectionPin, sm1_StepsPin);
-  delay(5000);
+  rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
 
   lengthenArm();
   delay((int) (getActiveTime(4) * 1000));
   stopArm();
   //Second Titrator
-  rotate(8000, 0.5, sm2_DirectionPin, sm2_StepsPin);
-  delay(5000);
+  rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
 
   lengthenArm();
   delay((int) (getActiveTime(17) * 1000));
   stopArm();
   //Colorimeter
-  delay(3000 * 60);
-  takeColour();
+//  delay(3000 * 60);
+//  takeColour();
   Serial.println("Nitrate assay has finished:");
   Serial.print("The concentration is: ");
   Serial.println(getNitrate());
@@ -172,4 +170,3 @@ void getSerial(void) {
     }
   }
 }
-
