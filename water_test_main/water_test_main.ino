@@ -79,12 +79,18 @@ void setup(void) {
   pinMode(sm3_DirectionPin, OUTPUT);
   pinMode(sm3_StepsPin, OUTPUT);
   pinMode(LED, OUTPUT);
- // initColourSensor();
+  // initColourSensor();
   Serial.begin(115200);
 }
 
 void loop(void) {
   getSerial();
+  
+  //Troubleshoot Stepper Motors
+  rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
+  rotate(-40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
+  rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
+  rotate(-40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
 }
 
 float getActiveTime(float distance) {
@@ -126,27 +132,27 @@ void rotate(int steps, float speed, byte motorPin, byte stepsPin) {
 }
 
 void startNitrateAssay(void) {
-  lengthenArm();
-  delay((int) (getActiveTime(4) * 1000));
-  stopArm();
-  //First Titrator
-  rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
-
-  lengthenArm();
-  delay((int) (getActiveTime(4) * 1000));
-  stopArm();
-  //Second Titrator
-  rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
-
-  lengthenArm();
-  delay((int) (getActiveTime(17) * 1000));
-  stopArm();
-  //Colorimeter
-//  delay(3000 * 60);
-//  takeColour();
-  Serial.println("Nitrate assay has finished:");
-  Serial.print("The concentration is: ");
-  Serial.println(getNitrate());
+    lengthenArm();
+    delay((int) (getActiveTime(4) * 1000));
+    stopArm();
+    //First Titrator
+    rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
+  
+    lengthenArm();
+    delay((int) (getActiveTime(4) * 1000));
+    stopArm();
+    //Second Titrator
+    rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
+  
+    lengthenArm();
+    delay((int) (getActiveTime(17) * 1000));
+    stopArm();
+    //Colorimeter
+  //  delay(3000 * 60);
+  //  takeColour();
+    Serial.println("Nitrate assay has finished:");
+    Serial.print("The concentration is: ");
+    Serial.println(getNitrate());
 }
 
 
