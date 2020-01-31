@@ -13,6 +13,8 @@
 #include <WiFiClient.h>
 #include <Adafruit_BMP280.h>
 
+#define RELAY D4
+
 // config:
 const char *ssid = "RoboRemoApp";  // You have to connect your phone to this Access Point
 const char *pw = "87654321"; // and this is the password
@@ -64,12 +66,15 @@ String constructMessage(String id, float value) {
 
 void initBMP280(void) {
   Wire.begin();
-  while (!tempSensor.begin(0x76)) {
+  while (!tempSensor.begin(0x77)) {
     Serial.println("Could not find a valid BMP280 indoor sensor, check wiring!");
   }
 }
 
 void setup() {
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, LOW);
+  initBMP280();
   Serial.begin(115200);
 
   WiFi.softAPConfig(ip, ip, netmask); // configure ip address for softAP
@@ -81,10 +86,11 @@ void setup() {
   Serial.println((String)"SSID: " + ssid + "  PASS: " + pw);
   Serial.println((String)"RoboRemo app must connect to " + ip.toString() + ":" + port);
 
-  currentTemp = 0;
+  setPoint = 0;
 }
 
 void loop() {
+  float currentTemp = tempSensor.readTemperature();
   // Keep looking for a client.
   if (!client.connected()) {
     client = server.available();
@@ -95,8 +101,13 @@ void loop() {
   // If client is connected.
   if (client.available()) {
     parseSerial();
+    if (setPoint > currentTemp) {
+      digitalWrite(RELAY, HIGH);
+    } else {
+      digitalWrite(RELAY, LOW);
+    }
   }
-  client.print(constructMessage("plot", (float) setPoint));
-  client.print(constructMessage("log", (float) setPoint));
+  client.print(constructMessage("plot", (float) currentTemp));
+  client.print(constructMessage("log", (float) currentTemp));
   delay(200);
 }
