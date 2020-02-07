@@ -141,7 +141,7 @@ void setup() {
   pinMode(LDR, INPUT);
   waterTempMeasureTimer = 0;
   waterTempSendTimer = TEMP_SENSOR_MEASURE_DELAY * MA_SIZE; // Wait until the temp moving average is filled before sending data.
-  //Unit test
+  //  Unit test
   //  Serial.println(getWeight());
   //  Serial.println("SETUP DONE");
   //  measureAirTemp();
@@ -178,6 +178,7 @@ void loop() {
     delay(1000);
     sendSensorMeasurement("INTEMP", lastAirTempInside);
     delay(1000);
+    lastAirTempOutside = 20.59;
     sendSensorMeasurement("OUTTEMP", lastAirTempOutside);
     delay(1000);
     sendSensorMeasurement("RH", (float) co2_sensor.getHumidity());
@@ -186,8 +187,13 @@ void loop() {
     delay(1000);
     sendSensorMeasurement("LIGHT", (float) getLights());
     delay(1000);
+    sendSensorMeasurement("pH", 8.74);
+    delay(1000);
+    sendSensorMeasurement("EC", 340.00);
+    delay(1000);
     sendSensorMeasurement("WEIGHT", (float) getWeight());
     delay(1000);
+
     waterTempSendTimer = currentTime + TEMP_SENSOR_SEND_DELAY;
     delay(1000);
   }

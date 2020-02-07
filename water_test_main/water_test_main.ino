@@ -1,4 +1,5 @@
 #include <Wire.h>
+#include <Servo.h>
 #include "Adafruit_TCS34725.h"
 
 /* TCS34725 RGB Color sensor
@@ -18,12 +19,15 @@
 #define sm3_StepsPin 9
 //Colorimeter
 #define LED 10
+#define servo_Pin 11
 
 char buffer[32];
 const char EOL = '\n';    //command terminator (end of line)
 const char separator = ' ';
 char cmd;
 float value;
+
+Servo servo;
 
 /* Initialise with specific int time and gain values */
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
@@ -79,18 +83,22 @@ void setup(void) {
   pinMode(sm3_DirectionPin, OUTPUT);
   pinMode(sm3_StepsPin, OUTPUT);
   pinMode(LED, OUTPUT);
+  pinMode(servo_Pin, OUTPUT);
+  servo.attach(servo_Pin);
   // initColourSensor();
   Serial.begin(115200);
 }
 
 void loop(void) {
-  getSerial();
-  
-  //Troubleshoot Stepper Motors
-  rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
-  rotate(-40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
-  rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
-  rotate(-40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
+  //getSerial();
+
+//  Troubleshoot Stepper Motors
+  rotate(1600, 0.5, sm1_DirectionPin, sm1_StepsPin);
+  delay(1000);
+  rotate(-1600, 0.5, sm1_DirectionPin, sm1_StepsPin);
+  delay(1000);
+//  rotate(1600, 0.5, sm2_DirectionPin, sm2_StepsPin);
+//  rotate(-1600, 0.5, sm2_DirectionPin, sm2_StepsPin);
 }
 
 float getActiveTime(float distance) {
@@ -125,34 +133,34 @@ void rotate(int steps, float speed, byte motorPin, byte stepsPin) {
   /*Steppin'*/
   for (int i = 0; i < steps; i++) {
     digitalWrite(stepsPin, HIGH);
-    delayMicroseconds(speed);
+    delayMicroseconds(2000);
     digitalWrite(stepsPin, LOW);
-    delayMicroseconds(speed);
+    delayMicroseconds(2000);
   }
 }
 
 void startNitrateAssay(void) {
-    lengthenArm();
-    delay((int) (getActiveTime(4) * 1000));
-    stopArm();
-    //First Titrator
-    rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
-  
-    lengthenArm();
-    delay((int) (getActiveTime(4) * 1000));
-    stopArm();
-    //Second Titrator
-    rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
-  
-    lengthenArm();
-    delay((int) (getActiveTime(17) * 1000));
-    stopArm();
-    //Colorimeter
+  lengthenArm();
+  delay((int) (getActiveTime(4) * 1000));
+  stopArm();
+  //First Titrator
+  rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
+
+  lengthenArm();
+  delay((int) (getActiveTime(4) * 1000));
+  stopArm();
+  //Second Titrator
+  rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
+
+  lengthenArm();
+  delay((int) (getActiveTime(17) * 1000));
+  stopArm();
+  //Colorimeter
   //  delay(3000 * 60);
   //  takeColour();
-    Serial.println("Nitrate assay has finished:");
-    Serial.print("The concentration is: ");
-    Serial.println(getNitrate());
+  Serial.println("Nitrate assay has finished:");
+  Serial.print("The concentration is: ");
+  Serial.println(getNitrate());
 }
 
 
@@ -173,6 +181,18 @@ void getSerial(void) {
         shortenArm();
         delay((int) (getActiveTime(value) * 1000));
         stopArm(); break;
+      case '1':
+        rotate(40000, 0.5, sm1_DirectionPin, sm1_StepsPin);
+        break;
+      case '2':
+        rotate(40000, 0.5, sm2_DirectionPin, sm2_StepsPin);
+        break;
+      case '3':
+        rotate(40000, 0.5, sm3_DirectionPin, sm3_StepsPin);
+        break;
+      case '4':
+        servo.write(value);
+        break;
     }
   }
 }

@@ -34,6 +34,7 @@ String param;
 int setPoint;
 
 int currentTemp;
+bool heaterState;
 
 void parseSerial() {
   uint8_t byteCount = client.readBytesUntil(EOL, buffer, sizeof(buffer));   //read until EOL, put all to buffer.
@@ -72,9 +73,6 @@ void initBMP280(void) {
 }
 
 void setup() {
-  pinMode(RELAY, OUTPUT);
-  digitalWrite(RELAY, LOW);
-  initBMP280();
   Serial.begin(115200);
 
   WiFi.softAPConfig(ip, ip, netmask); // configure ip address for softAP
@@ -87,6 +85,10 @@ void setup() {
   Serial.println((String)"RoboRemo app must connect to " + ip.toString() + ":" + port);
 
   setPoint = 0;
+  heaterState = false;
+  pinMode(RELAY, OUTPUT);
+  digitalWrite(RELAY, LOW);
+  initBMP280();
 }
 
 void loop() {
@@ -96,18 +98,25 @@ void loop() {
     client = server.available();
     return;
   }
-  
+
   //RoboRemo can generate command with a button => "set press action" of "set release action" => "send *cmd".
   // If client is connected.
   if (client.available()) {
     parseSerial();
-    if (setPoint > currentTemp) {
-      digitalWrite(RELAY, HIGH);
-    } else {
+    if (currentTemp > setPoint + 0.2) {
+      heaterState = false;
       digitalWrite(RELAY, LOW);
+    } else if (currentTemp < setPoint - 0.2) {
+      heaterState = true;
+      digitalWrite(RELAY, HIGH);
     }
   }
   client.print(constructMessage("plot", (float) currentTemp));
   client.print(constructMessage("log", (float) currentTemp));
+  if (heaterState) {
+    client.print("led 1\n");
+  } else {
+    client.print("led 0\n");
+  }
   delay(200);
 }
