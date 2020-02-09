@@ -3,6 +3,7 @@
 //#define sm2_DirectionPin 6
 //#define sm2_StepsPin 7
 
+const int STEPS_PER_REVOLUTION = 1600;
 char buffer[32];
 const char EOL = '\n';    //command terminator (end of line)
 const char separator = ' ';
@@ -34,12 +35,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  rotate(-1600, sm1_DirectionPin, sm1_StepsPin);
-  rotate(1600, sm1_DirectionPin, sm1_StepsPin);
+  rotate(-5, sm1_DirectionPin, sm1_StepsPin);
+  rotate(5, sm1_DirectionPin, sm1_StepsPin);
 }
 
-void rotate(int steps, byte directionPin, byte stepsPin) {
+void rotate(int turns, byte directionPin, byte stepsPin) {
   int direction;
+  int steps = turns * STEPS_PER_REVOLUTION; 
   if (steps > 0) {
     direction = HIGH;
   } else {
