@@ -1,4 +1,4 @@
-#include <Wire.h>
+  
 #include <Servo.h>
 #include "Adafruit_TCS34725.h"
 

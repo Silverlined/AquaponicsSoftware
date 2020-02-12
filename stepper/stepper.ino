@@ -19,6 +19,7 @@ Servo servo;
 Adafruit_TCS34725 tcs = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_700MS, TCS34725_GAIN_1X);
 uint16_t r, g, b, c;
 
+const int STEPS_PER_REVOLUTION = 1600;
 char buffer[32];
 const char EOL = '\n';    //command terminator (end of line)
 const char separator = ' ';
@@ -168,12 +169,14 @@ void setup() {
 }
 
 void loop() {
+<<<<<<< HEAD
   getSerial();
 }
 
-void rotate(float turns, byte directionPin, byte stepsPin) {
-  unsigned int steps = turns * STEPS_PER_REVOLUTION;
+void rotate(int turns, byte directionPin, byte stepsPin) {
+>>>>>>> beff1471217ade1621863260e4f13d1c57a06b20
   int direction;
+  int steps = turns * STEPS_PER_REVOLUTION; 
   if (steps > 0) {
     direction = HIGH;
   } else {
