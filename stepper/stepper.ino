@@ -100,8 +100,8 @@ void stopArm(void) {
   digitalWrite(dcm_input2, LOW);
 }
 
-float getActiveTime(float distance) {
-  return (distance + 2.1) / 3.275;
+int getActiveTime(float distance) {
+  return (int) (distance * 483 - 24.4);
 }
 
 float getTurns(float mL) {
@@ -117,11 +117,11 @@ void getSerial(void) {
       case 's': stopArm(); break;
       case 'a':
         lengthenArm();
-        delay((int) (getActiveTime(value) * 1000));
+        delay(getActiveTime(value));
         stopArm(); break;
       case 'z':
         shortenArm();
-        delay((int) (getActiveTime(value) * 1000));
+        delay(getActiveTime(value));
         stopArm(); break;
       case '1':
         rotate(getTurns(value), sm1_DirectionPin, sm1_StepsPin);
@@ -138,7 +138,7 @@ void getSerial(void) {
       case '5':
         takeColour();
         Serial.print("Nitrate Concentration (mg/L): ");
-        Seria.prinln(getNitrate());
+        Serial.println(getNitrate());
         break;
     }
   }
@@ -182,12 +182,13 @@ void setup() {
   digitalWrite(sm3_DirectionPin, LOW);
   digitalWrite(sm3_StepsPin, LOW);
 
-  initColourSensor(); 
-
   servo.attach(servo_pin);
   servo.write(180);
 
   Serial.begin(115200);
+  initColourSensor();
+  
+  Serial.println("Setup Done");
 }
 
 void loop() {
