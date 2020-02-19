@@ -1,3 +1,4 @@
+#include <SoftwareSerial.h>
 #define sv1_relay A0
 #define sv2_relay A1
 #define sv3_relay A2
@@ -7,6 +8,10 @@
 #define sm1_DirectionPin 9
 #define sm1_StepsPin 8
 const int STEPS_PER_REVOLUTION = 1600;
+
+const byte RX_PIN = 6;
+const byte TX_PIN = 5;
+SoftwareSerial ESP_8266(RX_PIN, TX_PIN);
 
 
 char buffer[32];
@@ -39,8 +44,8 @@ void rotate(int turns, byte directionPin, byte stepsPin) {
   delay(500);
 }
 
-void parseSerial(void) {
-  uint8_t byteCount = Serial.readBytesUntil(EOL, buffer, sizeof(buffer));   //read until EOL, put all to buffer.
+void parseSoftwareSerial(void) {
+  uint8_t byteCount = ESP_8266.readBytesUntil(EOL, buffer, sizeof(buffer));   //read until EOL, put all to buffer.
   String _read = String(buffer);    //Use Strings to make character processing easier.
   memset(buffer, 0, sizeof(buffer));    //clear, empty buffer
 
@@ -54,9 +59,9 @@ void parseSerial(void) {
 }
 
 void getSerial(void) {
-  if (Serial.available()) {
+  if (ESP_8266.available() > 0) {
     Serial.println("Received");
-    parseSerial();
+    parseSoftwareSerial();
     switch (cmd) {
       case '1':
         digitalWrite(sv1_relay, LOW);
@@ -97,7 +102,7 @@ void setup() {
 
   pinMode(sm1_DirectionPin, OUTPUT);
   pinMode(sm1_StepsPin, OUTPUT);
-  
+
   pinMode(sv1_relay, OUTPUT);
   pinMode(sv2_relay, OUTPUT);
   pinMode(sv3_relay, OUTPUT);
@@ -108,7 +113,9 @@ void setup() {
   digitalWrite(sv3_relay, HIGH);
   digitalWrite(sv4_relay, HIGH);
   digitalWrite(sv5_relay, HIGH);
+
   Serial.begin(115200);
+  ESP_8266.begin(4800);
   Serial.println("DONE");
 }
 
